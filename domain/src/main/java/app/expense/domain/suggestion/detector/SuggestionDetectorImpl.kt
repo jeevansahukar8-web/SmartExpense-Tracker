@@ -14,8 +14,13 @@ class SuggestionDetectorImpl(private val regexHelper: RegexHelper) :
      * Check for smsMessage is of Transactional SMS and parse the Expense suggestion.
      */
     override fun detectSuggestions(smsMessage: SMSMessage): Suggestion? {
-        val isCredit = regexHelper.isCredit(smsMessage.body)
-        val isExpense = if (isCredit) false else regexHelper.isExpense(smsMessage.body)
+        // Guard clause: If the regex helper detects failure keywords, ignore it entirely
+        if (regexHelper.isFailedOrIgnored(smsMessage.body)) {
+            return null
+        }
+
+        val isExpenseMessage = regexHelper.isExpense(smsMessage.body)
+        val isCreditMessage = regexHelper.isCredit(smsMessage.body)
         
         val spent = regexHelper.getAmountSpent(smsMessage.body)
         var paidToName = regexHelper.getPaidToName(smsMessage.body) ?: "Unknown"
@@ -27,8 +32,8 @@ class SuggestionDetectorImpl(private val regexHelper: RegexHelper) :
             }
         }
 
-        // Accept if it's either an expense or a credit
-        if ((isExpense || isCredit) && spent != null) {
+        // Accept if it's explicitly one or the other, and we found an amount
+        if ((isExpenseMessage || isCreditMessage) && spent != null) {
             return Suggestion(
                 id = generateUniqueId(smsMessage),
                 amount = spent,
@@ -36,7 +41,7 @@ class SuggestionDetectorImpl(private val regexHelper: RegexHelper) :
                 time = smsMessage.time,
                 referenceMessage = smsMessage.body,
                 referenceMessageSender = smsMessage.address,
-                isExpense = isExpense // Correctly assign classification
+                isExpense = !isCreditMessage // False if it's a credit, True if it's a debit
             )
         }
 

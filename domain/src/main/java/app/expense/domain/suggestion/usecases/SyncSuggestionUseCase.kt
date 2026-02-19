@@ -55,7 +55,8 @@ class SyncSuggestionUseCase(
                     paidTo = suggestion.paidTo,
                     time = suggestion.time,
                     referenceMessage = suggestion.referenceMessage,
-                    referenceMessageSender = suggestion.referenceMessageSender
+                    referenceMessageSender = suggestion.referenceMessageSender,
+                    isExpense = suggestion.isExpense // Pass the classification flag to DB
                 )
             }
         ).collect()

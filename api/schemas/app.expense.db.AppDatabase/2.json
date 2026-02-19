@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "9d026665c5abf92d62af7058b996e14a",
+    "identityHash": "e6b75a5b1243c306077b3b0f1e0371eb",
     "entities": [
       {
         "tableName": "suggestion",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `amount` REAL NOT NULL, `paid_to` TEXT, `time` INTEGER NOT NULL, `reference_message` TEXT NOT NULL, `reference_message_sender` TEXT NOT NULL, `is_expense` INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `amount` REAL NOT NULL, `paidTo` TEXT, `time` INTEGER NOT NULL, `referenceMessage` TEXT NOT NULL, `referenceMessageSender` TEXT NOT NULL, `isExpense` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -22,7 +22,7 @@
           },
           {
             "fieldPath": "paidTo",
-            "columnName": "paid_to",
+            "columnName": "paidTo",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -34,22 +34,21 @@
           },
           {
             "fieldPath": "referenceMessage",
-            "columnName": "reference_message",
+            "columnName": "referenceMessage",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "referenceMessageSender",
-            "columnName": "reference_message_sender",
+            "columnName": "referenceMessageSender",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "isExpense",
-            "columnName": "is_expense",
+            "columnName": "isExpense",
             "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "1"
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -181,7 +180,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9d026665c5abf92d62af7058b996e14a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e6b75a5b1243c306077b3b0f1e0371eb')"
     ]
   }
 }

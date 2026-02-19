@@ -1,53 +1,55 @@
 package app.expense.domain.suggestion.detector
 
+import java.util.regex.Pattern
+
 class RegexHelper {
 
     companion object {
-        // Keywords that indicate the message is NOT an expense or credit (Promotional, OTPs, etc.)
-        private val IGNORE_KEYWORDS = listOf(
-            "offer", "loan", "cashback", "apply", "win", "reward", "discount", 
-            "otp", "limit", "promotional", "free"
-        )
+        const val DEBIT_PATTERN = "debited|debit|deducted|spent|paid"
+        const val CREDIT_PATTERN = "credited|received|added|deposited|refunded"
         
-        // Explicit transaction keywords
-        const val DEBIT_PATTERN = "debited|deducted|spent|payment of|paid to"
-        const val CREDIT_PATTERN = "credited|received|added|deposited|paid to your account|refunded" 
+        // Added security warning keywords from your dataset
+        const val IGNORE_PATTERN = "fail|failed|declined|rejected|unsuccessful|bounced|reversed|cooling period|never share|limit is applicable"
     }
 
     /**
-     * Checks whether the message is a valid transaction expense.
-     * @param message from SMS
+     * Checks if the message indicates a failed transaction or an informational warning.
      */
-    fun isExpense(message: String): Boolean {
-        val msg = message.lowercase()
-
-        if (IGNORE_KEYWORDS.any { msg.contains(it) }) return false
-        
-        // If it's a credit, it shouldn't be an expense
-        if (isCredit(message)) return false
-
-        val hasDebitKeyword = DEBIT_PATTERN.toRegex().containsMatchIn(msg) || 
-                             Regex("sent to|transfer to").containsMatchIn(msg)
-        
-        val hasAmount = "(?i)(rs\\.?|inr)\\s?\\d+".toRegex().containsMatchIn(msg)
-
-        return hasDebitKeyword && hasAmount
+    fun isFailedOrIgnored(message: String): Boolean {
+        return IGNORE_PATTERN.toRegex().containsMatchIn(message.lowercase())
     }
 
     /**
      * Check whether the message is of an income/credit type.
      */
     fun isCredit(message: String): Boolean {
-        val msg = message.lowercase()
+        if (isFailedOrIgnored(message)) return false
         
-        if (IGNORE_KEYWORDS.any { msg.contains(it) }) return false
+        val lowerMsg = message.lowercase()
         
-        val hasCreditKeyword = CREDIT_PATTERN.toRegex().containsMatchIn(msg) || 
-                              Regex("transfer from|received from").containsMatchIn(msg)
+        // FIX FOR TRAP 1: If the message says your account was debited AND credited to a merchant, it's an expense.
+        if (lowerMsg.contains("debited") && lowerMsg.contains("credited to")) {
+            return false
+        }
         
-        val hasAmount = "(?i)(rs\\.?|inr)\\s?\\d+".toRegex().containsMatchIn(msg)
+        return CREDIT_PATTERN.toRegex().containsMatchIn(lowerMsg)
+    }
+
+    /**
+     * Check whether the message is of transaction type (Expense).
+     */
+    fun isExpense(message: String): Boolean {
+        if (isFailedOrIgnored(message)) return false
         
-        return hasCreditKeyword && hasAmount
+        if (isCredit(message)) return false
+
+        val lowerMsg = message.lowercase()
+        val hasDebitKeyword = DEBIT_PATTERN.toRegex().containsMatchIn(lowerMsg)
+        
+        val genericRegex = "(?=.*[Aa]ccount.*|.*[Aa]/[Cc].*|.*[Aa][Cc][Cc][Tt].*|.*[Cc][Aa][Rr][Dd].*)(?=.*[Dd]ebit.*)(?=.*[Ii][Nn][Rr].*|.*[Rr][Ss].*)"
+        val matchesGeneric = Pattern.compile(genericRegex).matcher(message).find()
+
+        return hasDebitKeyword || matchesGeneric
     }
 
     /**

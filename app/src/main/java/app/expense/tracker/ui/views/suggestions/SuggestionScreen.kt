@@ -2,6 +2,9 @@ package app.expense.tracker.ui.views.suggestions
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -19,6 +24,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,14 +65,56 @@ fun SuggestionsScreen(
     val suggestionListState by viewModel.getSuggestionListState().collectAsState(initial = SuggestionListState())
     val currentFilter by viewModel.currentFilter.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // Launcher to let the user pick where to save the CSV file
+    val csvExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                try {
+                    val csvData = viewModel.generateCsvData()
+                    // Write the CSV string to the file the user just created
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(csvData.toByteArray())
+                    }
+                    Toast.makeText(context, "Exported successfully!", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = stringResource(R.string.suggestions),
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // Top Bar with Title and Export Button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.suggestions),
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            // Export Button
+            IconButton(onClick = { 
+                // Suggest a default file name
+                csvExportLauncher.launch("financial_messages_export.csv") 
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Share, 
+                    contentDescription = "Export to CSV",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
 
         // The Filter Row
         Row(

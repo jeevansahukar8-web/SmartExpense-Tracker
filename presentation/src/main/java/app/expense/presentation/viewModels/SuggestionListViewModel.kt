@@ -9,11 +9,14 @@ import app.expense.domain.suggestion.usecases.DeleteSuggestionUseCase
 import app.expense.domain.suggestion.usecases.FetchSuggestionUseCase
 import app.expense.presentation.viewStates.SuggestionListState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import java.util.Locale.getDefault
 import javax.inject.Inject
 
@@ -52,6 +55,33 @@ class SuggestionListViewModel @Inject constructor(
 
     suspend fun deleteSuggestion(suggestionId: Long) {
         deleteSuggestionUseCase.deleteSuggestion(suggestionId)
+    }
+
+    /**
+     * Fetches all suggestions and formats them as a CSV string.
+     */
+    suspend fun generateCsvData(): String = withContext(Dispatchers.IO) {
+        // Fetch ALL suggestions from the beginning of time
+        val allSuggestions = fetchSuggestionUseCase.getSuggestions(from = 0L).first()
+        
+        val csvBuilder = StringBuilder()
+        // CSV Header
+        csvBuilder.append("ID,Amount,PaidTo,Sender,Timestamp,IsExpense,Message\n")
+        
+        allSuggestions.forEach { suggestion ->
+            // SMS messages often contain commas or quotes. We must escape them for CSV.
+            val escapedMessage = suggestion.referenceMessage.replace("\"", "\"\"")
+            
+            csvBuilder.append(suggestion.id).append(",")
+            csvBuilder.append(suggestion.amount).append(",")
+            csvBuilder.append(suggestion.paidTo ?: "Unknown").append(",")
+            csvBuilder.append(suggestion.referenceMessageSender).append(",")
+            csvBuilder.append(suggestion.time).append(",")
+            csvBuilder.append(if (suggestion.isExpense) "Debit" else "Credit").append(",")
+            csvBuilder.append("\"").append(escapedMessage).append("\"\n") // Wrap message in quotes
+        }
+        
+        return@withContext csvBuilder.toString()
     }
 
     private fun getSuggestionsByDate(expenses: List<Suggestion>): Map<String, List<SuggestionListState.Item>> =

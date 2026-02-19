@@ -14,7 +14,7 @@ class FetchSuggestionUseCase(
     fun getSuggestions(from: Long, to: Long? = null): Flow<List<Suggestion>> {
         return suggestionsAPI.getSuggestions(from, to).map { suggestions ->
             suggestions.map { suggestionDTO ->
-                dataMapper.mapToSuggestion(suggestionDTO)
+                dataMapper.mapToDomain(suggestionDTO)
             }
         }
     }
@@ -22,7 +22,7 @@ class FetchSuggestionUseCase(
     fun getSuggestion(id: Long): Flow<Suggestion?> {
         return suggestionsAPI.getSuggestion(id).map { suggestionDto ->
             suggestionDto?.let {
-                dataMapper.mapToSuggestion(it)
+                dataMapper.mapToDomain(it)
             }
         }
     }
