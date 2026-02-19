@@ -1,12 +1,12 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.kapt")
-    id("com.google.dagger.hilt.android")
+    kotlin("android")
+    kotlin("kapt")
+    id(BuildPlugins.HILT)
 }
 
 android {
-    compileSdk = ConfigData.targetSdkVersion
+    compileSdk = ConfigData.compileSdkVersion
     namespace = "app.expense.domain"
 
     defaultConfig {

@@ -2,6 +2,7 @@ package app.expense.api
 
 import app.expense.db.daos.CategoryDAO
 import app.expense.db.model.CategoryDTO
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Category API to expose category related operations.
@@ -20,4 +21,10 @@ class CategoryAPI(private val categoryDAO: CategoryDAO) {
      */
     fun getCategoriesLike(name: String) =
         categoryDAO.fetchCategoriesLike(name)
+
+    /**
+     * Fetch all categories from DB.
+     */
+    fun getAllCategories(): Flow<List<String>> =
+        categoryDAO.getAllCategories()
 }

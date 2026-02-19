@@ -7,6 +7,7 @@ import app.expense.domain.expense.models.Expense
 import app.expense.domain.expense.usecases.AddExpenseUseCase
 import app.expense.domain.expense.usecases.DeleteExpenseUseCase
 import app.expense.domain.expense.usecases.FetchExpenseUseCase
+import app.expense.domain.suggestion.detector.LocalCategorizer
 import app.expense.domain.suggestion.usecases.DeleteSuggestionUseCase
 import app.expense.domain.suggestion.usecases.FetchSuggestionUseCase
 import app.expense.domain.utils.cleanMerchantName
@@ -52,30 +53,38 @@ class AddExpenseViewModel @Inject constructor(
                 if (suggestion != null) {
                     val cleanedMerchant = suggestion.paidTo?.cleanMerchantName() ?: ""
 
+                    // 1. Check the local categorizer instantly!
+                    val localPrediction = LocalCategorizer.predictCategory(cleanedMerchant, suggestion.referenceMessage)
+                    val initialCategories = if (localPrediction != "Unknown") listOf(localPrediction) else emptyList()
+
+                    // 2. Open dialog immediately with local prediction
                     _addExpenseViewStateFlow.value = AddExpenseViewState(
                         amount = suggestion.amount,
                         paidTo = cleanedMerchant,
                         time = suggestion.time,
                         suggestionMessage = suggestion.referenceMessage,
-                        categories = emptyList()
+                        categories = initialCategories // It pops in instantly!
                     )
 
-                    viewModelScope.launch {
-                        try {
-                            val predictedCategory = smartCategorizationService.getCategoryForExpense(
-                                merchant = cleanedMerchant,
-                                amount = suggestion.amount,
-                                fullText = suggestion.referenceMessage,
-                                timestamp = suggestion.time
-                            )
-
-                            if (!predictedCategory.isNullOrBlank() && predictedCategory != "Unknown") {
-                                _addExpenseViewStateFlow.value = _addExpenseViewStateFlow.value.copy(
-                                    categories = listOf(predictedCategory)
+                    // 3. Only call AI service if the local categorizer failed
+                    if (localPrediction == "Unknown") {
+                        viewModelScope.launch {
+                            try {
+                                val aiCategory = smartCategorizationService.getCategoryForExpense(
+                                    merchant = cleanedMerchant,
+                                    amount = suggestion.amount,
+                                    fullText = suggestion.referenceMessage,
+                                    timestamp = suggestion.time
                                 )
+
+                                if (!aiCategory.isNullOrBlank() && aiCategory != "Unknown") {
+                                    _addExpenseViewStateFlow.value = _addExpenseViewStateFlow.value.copy(
+                                        categories = listOf(aiCategory)
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
                         }
                     }
                 }

@@ -15,4 +15,8 @@ class FetchCategoriesUseCase(
             }
         }
     }
+
+    fun getCategories(): Flow<List<String>> {
+        return categoryAPI.getAllCategories()
+    }
 }

@@ -15,4 +15,7 @@ interface CategoryDAO {
 
     @Query("SELECT * FROM `category` WHERE name LIKE '%'|| :name || '%' LIMIT 3")
     fun fetchCategoriesLike(name: String): Flow<List<CategoryDTO>>
+
+    @Query("SELECT name FROM `category`")
+    fun getAllCategories(): Flow<List<String>>
 }
