@@ -25,7 +25,8 @@ class ExpenseStatsViewModel @Inject constructor(
 
         return fetchExpenseUseCase.getExpenses(from = calendar.timeInMillis).map { expenses ->
             ExpenseStats(
-                monthlySpent = getMonthlySpent(expenses)
+                monthlySpent = getMonthlySpent(expenses),
+                categorySpent = getCategorySpent(expenses)
             )
         }
     }
@@ -43,4 +44,13 @@ class ExpenseStatsViewModel @Inject constructor(
             }.mapKeys { mapEntry ->
                 Month.of(mapEntry.key + 1).getDisplayName(TextStyle.SHORT, getDefault())
             }
+
+    private fun getCategorySpent(expenses: List<Expense>): Map<String, Double> {
+        val categoryMap = mutableMapOf<String, Double>()
+        expenses.forEach { expense ->
+            val category = expense.categories.firstOrNull() ?: "Others"
+            categoryMap[category] = (categoryMap[category] ?: 0.0) + expense.amount
+        }
+        return categoryMap
+    }
 }

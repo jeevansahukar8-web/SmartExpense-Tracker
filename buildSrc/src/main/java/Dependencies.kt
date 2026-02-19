@@ -2,14 +2,15 @@
  * To define plugins
  */
 
-private const val KOTLIN_VERSION = "1.5.0"
+private const val KOTLIN_VERSION = "1.9.22"
 
 object BuildPlugins {
-    private const val GRADLE_PLUGIN_VERSION = "4.2.1"
+    private const val GRADLE_PLUGIN_VERSION = "8.3.0"
 
     const val ANDROID = "com.android.tools.build:gradle:$GRADLE_PLUGIN_VERSION"
     const val KOTLIN = "org.jetbrains.kotlin:kotlin-gradle-plugin:$KOTLIN_VERSION"
     const val HILT = "com.google.dagger.hilt.android"
+    const val KSP = "com.google.devtools.ksp"
 }
 
 /**
@@ -19,35 +20,36 @@ object Deps {
     const val KOTLIN = "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION"
 
     object Core {
-        const val DEPENDENCY = "androidx.core:core-ktx:1.8.0"
+        const val DEPENDENCY = "androidx.core:core-ktx:1.12.0"
     }
 
     object Coroutines {
-        const val DEP = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+        const val DEP = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     }
 
     object Material {
-        const val DEPENDENCY = "com.google.android.material:material:1.6.1"
+        const val DEPENDENCY = "com.google.android.material:material:1.11.0"
     }
 
     object Compose {
-        private const val COMPOSE_VERSION = "1.2.1"
+        private const val COMPOSE_VERSION = "1.6.1"
 
         const val UI = "androidx.compose.ui:ui:$COMPOSE_VERSION"
-        const val MATERIAL3 = "androidx.compose.material3:material3:1.0.0-alpha16"
-        const val PREVIEW = "androidx.compose.ui:ui-tooling-preview:1.2.1"
+        const val MATERIAL3 = "androidx.compose.material3:material3:1.2.0"
+        const val PREVIEW = "androidx.compose.ui:ui-tooling-preview:$COMPOSE_VERSION"
         const val CONSTRAINT = "androidx.constraintlayout:constraintlayout-compose:1.0.1"
-        const val ACTIVITY = "androidx.activity:activity-compose:1.5.1"
+        const val ACTIVITY = "androidx.activity:activity-compose:1.8.2"
         const val RUNTIME = "androidx.compose.runtime:runtime:$COMPOSE_VERSION"
         const val FOUNDATION = "androidx.compose.foundation:foundation:$COMPOSE_VERSION"
-        const val VIEW_MODEL = "androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1"
+        const val VIEW_MODEL = "androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0"
+        const val GOOGLE_FONTS = "androidx.compose.ui:ui-text-google-fonts:$COMPOSE_VERSION"
         const val DEBUG_TOOLING = "androidx.compose.ui:ui-tooling:$COMPOSE_VERSION"
         const val DEBUG_MANIFEST = "androidx.compose.ui:ui-test-manifest:$COMPOSE_VERSION"
         const val ANDROID_UI_TEST = "androidx.compose.ui:ui-test-junit4:$COMPOSE_VERSION"
     }
 
     object Room {
-        private const val ROOM_VERSION = "2.4.3"
+        private const val ROOM_VERSION = "2.6.1"
 
         const val RUNTIME = "androidx.room:room-runtime:$ROOM_VERSION"
         const val KTX = "androidx.room:room-ktx:$ROOM_VERSION"
@@ -56,11 +58,11 @@ object Deps {
 
     object JUnit {
         const val TEST = "junit:junit:4.13.2"
-        const val ANDROID_TEST = "androidx.test.ext:junit:1.1.3"
+        const val ANDROID_TEST = "androidx.test.ext:junit:1.1.5"
     }
 
     object Mockk {
-        const val TEST = "io.mockk:mockk:1.12.5"
+        const val TEST = "io.mockk:mockk:1.13.8"
     }
 
     object Truth {
@@ -68,16 +70,16 @@ object Deps {
     }
 
     object Espresso {
-        const val ANDROID_TEST = "androidx.test.espresso:espresso-core:3.4.0"
+        const val ANDROID_TEST = "androidx.test.espresso:espresso-core:3.5.1"
     }
 
     object Navigation {
-        const val NAV_COMPOSE = "androidx.navigation:navigation-compose:2.5.1"
+        const val NAV_COMPOSE = "androidx.navigation:navigation-compose:2.7.6"
     }
 
     object Hilt {
-        private const val HILT_VERSION = "2.43.2"
-        private const val HILT_OTHER_JETPACK_VERSION = "1.0.0"
+        private const val HILT_VERSION = "2.51.1"
+        private const val HILT_OTHER_JETPACK_VERSION = "1.1.0"
 
         const val HILT = "com.google.dagger:hilt-android:$HILT_VERSION"
         const val KAPT = "com.google.dagger:hilt-android-compiler:$HILT_VERSION"
@@ -88,7 +90,7 @@ object Deps {
     }
 
     object WorkManager {
-        const val RUNTIME = "androidx.work:work-runtime-ktx:2.7.1"
+        const val RUNTIME = "androidx.work:work-runtime-ktx:2.9.0"
     }
 
     object DataStore {
@@ -100,7 +102,7 @@ object Deps {
     }
 
     object Accompanies {
-        const val DEPS = "com.google.accompanist:accompanist-permissions:0.26.0-alpha"
+        const val DEPS = "com.google.accompanist:accompanist-permissions:0.32.0"
     }
 
     object Modules {

@@ -1,12 +1,13 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id(BuildPlugins.HILT)
+    kotlin("android")
     kotlin("kapt")
+    id(BuildPlugins.HILT)
 }
 
 android {
     compileSdk = ConfigData.targetSdkVersion
+    namespace = "app.expense.tracker"
 
     defaultConfig {
         applicationId = "app.expense.tracker"
@@ -31,11 +32,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = ConfigData.jvmVersion
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -43,7 +44,7 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = ConfigData.kotlinCompilerVersion
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -64,6 +65,7 @@ dependencies {
     implementation(Deps.Compose.FOUNDATION)
     implementation(Deps.Compose.CONSTRAINT)
     implementation(Deps.Compose.VIEW_MODEL)
+    implementation(Deps.Compose.GOOGLE_FONTS)
     implementation(Deps.Material.DEPENDENCY)
     debugImplementation(Deps.Compose.DEBUG_TOOLING)
     debugImplementation(Deps.Compose.DEBUG_MANIFEST)

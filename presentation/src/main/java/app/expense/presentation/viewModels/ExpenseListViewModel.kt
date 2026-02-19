@@ -40,7 +40,9 @@ class ExpenseListViewModel @Inject constructor(
                     ExpenseListState.Item(
                         id = expense.id ?: 0,
                         amount = NumberFormat.getCurrencyInstance().format(expense.amount),
-                        paidTo = expense.paidTo
+                        paidTo = expense.paidTo,
+                        category = expense.categories.firstOrNull(),
+                        time = SimpleDateFormat("hh:mm a", getDefault()).format(expense.time)
                     )
                 }
             }.mapKeys { mapEntry ->

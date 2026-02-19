@@ -1,25 +1,19 @@
 plugins {
     id("com.android.library")
-    id(BuildPlugins.HILT)
     kotlin("android")
     kotlin("kapt")
+    id(BuildPlugins.HILT)
 }
 
 android {
     compileSdk = ConfigData.targetSdkVersion
+    namespace = "app.expense.api"
 
     defaultConfig {
         minSdk = ConfigData.minSdkVersion
-        targetSdk = ConfigData.targetSdkVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                argument("room.schemaLocation","$projectDir/schemas")
-            }
-        }
     }
 
     buildTypes {
@@ -31,13 +25,14 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
-        val options = this
-        options.jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
 
@@ -51,7 +46,7 @@ dependencies {
     implementation(Deps.Hilt.HILT)
     kapt(Deps.Hilt.KAPT)
 
-    //DataStore
+    // DataStore
     implementation(Deps.DataStore.CORE)
     implementation(Deps.DataStore.PREFS)
 
@@ -62,4 +57,7 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 }

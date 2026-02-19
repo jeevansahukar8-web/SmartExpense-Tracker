@@ -1,29 +1,17 @@
-plugins {
-    id("com.android.application") version "7.2.1" apply false
-    id("com.android.library") version "7.2.1" apply false
-    id("org.jetbrains.kotlin.android") version "1.7.0" apply false
-    id("org.jetbrains.kotlin.jvm") version "1.7.0" apply false
-    id("org.jlleitschuh.gradle.ktlint") version "10.3.0" apply false
-}
+@file:Suppress("DEPRECATION")
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:7.2.2")
-        classpath(kotlin("gradle-plugin", version = "1.3.70"))
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.43.1")
-    }
+plugins {
+    id("com.android.application") version "8.7.3" apply false
+    id("com.android.library") version "8.7.3" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+    id("org.jetbrains.kotlin.jvm") version "1.9.22" apply false
+    id("org.jetbrains.kotlin.kapt") version "1.9.22" apply false
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.1" apply false
+    id("com.google.dagger.hilt.android") version "2.51.1" apply false
 }
 
 subprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint") // Version should be inherited from parent
-
-    repositories {
-        mavenCentral()
-    }
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         debug.set(true)

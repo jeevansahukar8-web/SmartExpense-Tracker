@@ -7,5 +7,7 @@ data class ExpenseListState(
         val id: Long,
         val amount: String,
         val paidTo: String?,
+        val category: String?,
+        val time: String
     )
 }
