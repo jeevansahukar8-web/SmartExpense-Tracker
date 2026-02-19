@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import app.expense.domain.suggestion.models.Suggestion
 import app.expense.domain.suggestion.usecases.DeleteSuggestionUseCase
 import app.expense.domain.suggestion.usecases.FetchSuggestionUseCase
-import app.expense.domain.utils.cleanMerchantName
 import app.expense.presentation.viewStates.SuggestionListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -96,11 +95,16 @@ class SuggestionListViewModel @Inject constructor(
             }
             .mapValues { mapEntry ->
                 mapEntry.value.map { suggestion ->
+                    val formattedAmount = NumberFormat.getCurrencyInstance().format(suggestion.amount)
+                    
                     SuggestionListState.Item(
                         id = suggestion.id,
-                        amount = NumberFormat.getCurrencyInstance().format(suggestion.amount),
-                        // Call the cleaner here!
-                        message = suggestion.paidTo?.cleanMerchantName() ?: "Unknown",
+                        // 1. Add the + or - prefix based on whether it is an expense
+                        amount = "${if (suggestion.isExpense) "-" else "+"} $formattedAmount",
+                        
+                        // 2. Revert back to showing the full SMS text
+                        message = suggestion.referenceMessage,
+
                         isExpense = suggestion.isExpense
                     )
                 }

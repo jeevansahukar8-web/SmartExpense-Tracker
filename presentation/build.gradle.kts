@@ -43,6 +43,7 @@ dependencies {
 
     // Compose
     implementation(Deps.Compose.RUNTIME)
+    implementation(Deps.Compose.VIEW_MODEL)
 
     // Coroutines
     implementation(Deps.Coroutines.DEP)
@@ -59,6 +60,7 @@ dependencies {
 
     // Modules
     implementation(project(Deps.Modules.DOMAIN))
+    implementation(project(Deps.Modules.API))
 }
 
 kapt {

@@ -1,17 +1,21 @@
 package app.expense.presentation.viewModels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.expense.api.SmartCategorizationService
 import app.expense.domain.expense.models.Expense
 import app.expense.domain.expense.usecases.AddExpenseUseCase
 import app.expense.domain.expense.usecases.DeleteExpenseUseCase
 import app.expense.domain.expense.usecases.FetchExpenseUseCase
 import app.expense.domain.suggestion.usecases.DeleteSuggestionUseCase
 import app.expense.domain.suggestion.usecases.FetchSuggestionUseCase
+import app.expense.domain.utils.cleanMerchantName
 import app.expense.presentation.viewStates.AddExpenseViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,7 +24,8 @@ class AddExpenseViewModel @Inject constructor(
     private val fetchSuggestionUseCase: FetchSuggestionUseCase,
     private val addExpenseUseCase: AddExpenseUseCase,
     private val deleteExpenseUseCase: DeleteExpenseUseCase,
-    private val deleteSuggestionUseCase: DeleteSuggestionUseCase
+    private val deleteSuggestionUseCase: DeleteSuggestionUseCase,
+    private val smartCategorizationService: SmartCategorizationService
 ) : ViewModel() {
 
     private val _addExpenseViewStateFlow = MutableStateFlow(AddExpenseViewState())
@@ -33,7 +38,6 @@ class AddExpenseViewModel @Inject constructor(
     ) {
         if (expenseId != null) {
             fetchExpenseUseCase.getExpense(expenseId).first().also { expense ->
-
                 if (expense != null) {
                     _addExpenseViewStateFlow.value = AddExpenseViewState(
                         amount = expense.amount,
@@ -45,14 +49,35 @@ class AddExpenseViewModel @Inject constructor(
             }
         } else if (suggestionId != null) {
             fetchSuggestionUseCase.getSuggestion(suggestionId).first().also { suggestion ->
-                // TODO Get category based on paidTo by ML or other intelligent way
                 if (suggestion != null) {
+                    val cleanedMerchant = suggestion.paidTo?.cleanMerchantName() ?: ""
+
                     _addExpenseViewStateFlow.value = AddExpenseViewState(
                         amount = suggestion.amount,
-                        paidTo = suggestion.paidTo ?: "",
+                        paidTo = cleanedMerchant,
                         time = suggestion.time,
-                        suggestionMessage = suggestion.referenceMessage
+                        suggestionMessage = suggestion.referenceMessage,
+                        categories = emptyList()
                     )
+
+                    viewModelScope.launch {
+                        try {
+                            val predictedCategory = smartCategorizationService.getCategoryForExpense(
+                                merchant = cleanedMerchant,
+                                amount = suggestion.amount,
+                                fullText = suggestion.referenceMessage,
+                                timestamp = suggestion.time
+                            )
+
+                            if (!predictedCategory.isNullOrBlank() && predictedCategory != "Unknown") {
+                                _addExpenseViewStateFlow.value = _addExpenseViewStateFlow.value.copy(
+                                    categories = listOf(predictedCategory)
+                                )
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
                 }
             }
         }
