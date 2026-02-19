@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import app.expense.domain.suggestion.models.Suggestion
 import app.expense.domain.suggestion.usecases.DeleteSuggestionUseCase
 import app.expense.domain.suggestion.usecases.FetchSuggestionUseCase
+import app.expense.domain.utils.cleanMerchantName
 import app.expense.presentation.viewStates.SuggestionListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -97,9 +98,9 @@ class SuggestionListViewModel @Inject constructor(
                 mapEntry.value.map { suggestion ->
                     SuggestionListState.Item(
                         id = suggestion.id,
-                        // Add a +/- prefix for visual clarity
-                        amount = "${if (suggestion.isExpense) "-" else "+"} ${NumberFormat.getCurrencyInstance().format(suggestion.amount)}",
-                        message = suggestion.referenceMessage,
+                        amount = NumberFormat.getCurrencyInstance().format(suggestion.amount),
+                        // Call the cleaner here!
+                        message = suggestion.paidTo?.cleanMerchantName() ?: "Unknown",
                         isExpense = suggestion.isExpense
                     )
                 }

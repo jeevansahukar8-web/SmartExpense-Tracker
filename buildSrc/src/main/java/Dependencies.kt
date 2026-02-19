@@ -116,5 +116,6 @@ object Deps {
         const val PRESENTATION = ":presentation"
         const val DOMAIN = ":domain"
         const val API = ":api"
+        const val APP = ":app"
     }
 }
