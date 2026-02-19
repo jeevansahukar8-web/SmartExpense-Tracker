@@ -14,5 +14,6 @@ class SuggestionDTO(
     @ColumnInfo(name = "paid_to") val paidTo: String?,
     @ColumnInfo(name = "time") val time: Long,
     @ColumnInfo(name = "reference_message") val referenceMessage: String,
-    @ColumnInfo(name = "reference_message_sender") val referenceMessageSender: String
+    @ColumnInfo(name = "reference_message_sender") val referenceMessageSender: String,
+    @ColumnInfo(name = "is_expense", defaultValue = "1") val isExpense: Boolean = true
 )

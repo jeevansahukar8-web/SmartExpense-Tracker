@@ -7,5 +7,6 @@ data class SuggestionListState(
         val id: Long,
         val amount: String,
         val message: String,
+        val isExpense: Boolean // Pass this to the UI
     )
 }

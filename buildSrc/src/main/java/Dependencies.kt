@@ -31,6 +31,13 @@ object Deps {
         const val DEPENDENCY = "com.google.android.material:material:1.11.0"
     }
 
+    object Retrofit {
+        private const val RETROFIT_VERSION = "2.9.0"
+
+        const val RETROFIT = "com.squareup.retrofit2:retrofit:$RETROFIT_VERSION"
+        const val GSON = "com.squareup.retrofit2:converter-gson:$RETROFIT_VERSION"
+    }
+
     object Compose {
         private const val COMPOSE_VERSION = "1.6.1"
 

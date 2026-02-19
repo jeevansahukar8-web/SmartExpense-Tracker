@@ -16,11 +16,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,12 +32,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import app.expense.presentation.viewModels.SuggestionFilter
 import app.expense.presentation.viewModels.SuggestionListViewModel
 import app.expense.presentation.viewStates.SuggestionListState
 import app.expense.tracker.R
@@ -44,23 +48,50 @@ import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SuggestionsScreen(
     onAddSuggestion: (suggestionId: Long) -> Unit,
     viewModel: SuggestionListViewModel = hiltViewModel()
 ) {
-    val suggestionListState =
-        viewModel.getSuggestionListState().collectAsState(initial = SuggestionListState()).value
+    val suggestionListState by viewModel.getSuggestionListState().collectAsState(initial = SuggestionListState())
+    val currentFilter by viewModel.currentFilter.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
             text = stringResource(R.string.suggestions),
             style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(vertical = 16.dp),
+            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
             color = MaterialTheme.colorScheme.onSurface
         )
+
+        // The Filter Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = currentFilter == SuggestionFilter.ALL,
+                onClick = { viewModel.setFilter(SuggestionFilter.ALL) },
+                label = { Text("All") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+            FilterChip(
+                selected = currentFilter == SuggestionFilter.DEBIT,
+                onClick = { viewModel.setFilter(SuggestionFilter.DEBIT) },
+                label = { Text("Debits") },
+            )
+            FilterChip(
+                selected = currentFilter == SuggestionFilter.CREDIT,
+                onClick = { viewModel.setFilter(SuggestionFilter.CREDIT) },
+                label = { Text("Credits") },
+            )
+        }
 
         val smsPermissionState = rememberPermissionState(
             Manifest.permission.READ_SMS
@@ -137,8 +168,9 @@ private fun ShowSuggestions(
     LazyColumn(
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
-        items(suggestionListState.dateSuggestionsMap.size) { pos ->
-            val dateString = suggestionListState.dateSuggestionsMap.keys.toList()[pos]
+        val dateStrings = suggestionListState.dateSuggestionsMap.keys.toList()
+        items(dateStrings.size) { pos ->
+            val dateString = dateStrings[pos]
             val suggestionItems = suggestionListState.dateSuggestionsMap[dateString]
 
             Text(
@@ -179,7 +211,10 @@ private fun ShowSuggestions(
                                 text = suggestionItem.amount,
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (suggestionItem.isExpense)
+                                    MaterialTheme.colorScheme.error
+                                else
+                                    Color(0xFF4CAF50) // Material Green
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             TextButton(

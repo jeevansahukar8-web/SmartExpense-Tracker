@@ -6,5 +6,6 @@ data class Suggestion(
     val paidTo: String?,
     val time: Long,
     val referenceMessage: String,
-    val referenceMessageSender: String
+    val referenceMessageSender: String,
+    val isExpense: Boolean = true // Added flag to differentiate debit vs credit
 )

@@ -37,6 +37,10 @@ android {
 }
 
 dependencies {
+    // Retrofit
+    implementation(Deps.Retrofit.RETROFIT)
+    implementation(Deps.Retrofit.GSON)
+
     // Room
     implementation(Deps.Room.RUNTIME)
     implementation(Deps.Room.KTX)

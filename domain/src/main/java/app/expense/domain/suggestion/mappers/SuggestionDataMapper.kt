@@ -11,6 +11,7 @@ class SuggestionDataMapper {
         paidTo = suggestion.paidTo,
         time = suggestion.time,
         referenceMessage = suggestion.referenceMessage,
-        referenceMessageSender = suggestion.referenceMessageSender
+        referenceMessageSender = suggestion.referenceMessageSender,
+        isExpense = suggestion.isExpense
     )
 }

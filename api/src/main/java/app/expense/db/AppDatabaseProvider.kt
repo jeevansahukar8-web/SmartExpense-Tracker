@@ -8,6 +8,7 @@ class AppDatabaseProvider(private val context: Context) {
     fun getDatabase(): AppDatabase {
         return Room
             .databaseBuilder(context, AppDatabase::class.java, "expense_db")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .build()
     }
 }
