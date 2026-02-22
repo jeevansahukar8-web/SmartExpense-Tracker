@@ -9,10 +9,12 @@ import app.expense.db.model.SuggestionDTO
 import app.expense.domain.suggestion.detector.SuggestionDetector
 import app.expense.domain.suggestion.mappers.SMSMessageDataMapper
 import app.expense.domain.suggestion.models.Suggestion
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -37,8 +39,12 @@ class SyncSuggestionUseCase(
     fun sync(): Flow<List<Suggestion>> = flow {
         val lastSyncedTime = suggestionSyncAPI.getLastSyncedTime().first()
         val startTime = calendar.timeInMillis
+        
+        // Calculate 90 days (~3 months) prior to the current moment
+        val fallbackTime = startTime - TimeUnit.DAYS.toMillis(90)
+
         val suggestions: List<Suggestion> =
-            smsReadAPI.getAllSms(lastSyncedTime ?: TimeUnit.DAYS.toMillis(2))
+            smsReadAPI.getAllSms(lastSyncedTime ?: fallbackTime)
                 .mapNotNull { smsMessageDTO ->
                     suggestionDetector.detectSuggestions(
                         dataMapper.mapToSMSMessage(
@@ -64,5 +70,5 @@ class SyncSuggestionUseCase(
         suggestionSyncAPI.setLastSyncedTime(startTime)
 
         emit(suggestions)
-    }
+    }.flowOn(Dispatchers.IO)
 }

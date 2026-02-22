@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.text.NumberFormat
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -67,7 +68,7 @@ class ExpenseStatsViewModel @Inject constructor(
 
             ExpenseStats(
                 userName = userDetails.firstName.ifBlank { "User" },
-                totalSpent = NumberFormat.getCurrencyInstance().format(totalSpentAmount),
+                totalSpent = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(totalSpentAmount),
                 weeklySpent = weeklyData.toList(),
                 categorySpent = categorySpent,
                 topCategory = topCategory,

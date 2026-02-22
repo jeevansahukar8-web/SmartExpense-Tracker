@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import java.util.Locale.getDefault
 import javax.inject.Inject
 
@@ -95,7 +96,7 @@ class SuggestionListViewModel @Inject constructor(
             }
             .mapValues { mapEntry ->
                 mapEntry.value.map { suggestion ->
-                    val formattedAmount = NumberFormat.getCurrencyInstance().format(suggestion.amount)
+                    val formattedAmount = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(suggestion.amount)
                     
                     SuggestionListState.Item(
                         id = suggestion.id,

@@ -56,6 +56,7 @@ import app.expense.tracker.ui.utils.AmountInputDialog
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.Locale.getDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -267,7 +268,7 @@ fun AddExpenseScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = NumberFormat.getCurrencyInstance().format(amount.value),
+                            text = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(amount.value),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onSurface

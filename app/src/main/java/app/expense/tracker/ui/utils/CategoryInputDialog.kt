@@ -52,6 +52,7 @@ import app.expense.presentation.viewModels.AddExpenseViewModel
 import app.expense.tracker.R
 import app.expense.tracker.ui.theme.AccentBlue
 import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,7 +97,7 @@ fun CategoryInputDialog(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = NumberFormat.getCurrencyInstance().format(viewState.amount),
+                        text = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(viewState.amount),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = AccentBlue

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -158,7 +159,7 @@ class BudgetViewModel @Inject constructor(
 
     private fun generateRecommendation(totalSpent: Double, totalLimit: Double, categories: List<CategoryBudget>): String {
         val remaining = totalLimit - totalSpent
-        val formatter = NumberFormat.getCurrencyInstance()
+        val formatter = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
         
         val overBudgetCategories = categories.filter { it.spent > it.limit }
         

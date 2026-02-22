@@ -2,15 +2,19 @@ package app.expense.tracker.ui.views.home
 
 import android.Manifest
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -18,11 +22,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -33,16 +39,21 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,6 +62,7 @@ import app.expense.presentation.viewModels.HomeScreenViewModel
 import app.expense.presentation.viewModels.SettingsViewModel
 import app.expense.tracker.R
 import app.expense.tracker.ui.theme.AccentBlue
+import app.expense.tracker.ui.theme.Secondary
 import app.expense.tracker.ui.utils.ScreenRoute
 import app.expense.tracker.ui.utils.replace
 import app.expense.tracker.ui.views.budget.BudgetScreen
@@ -77,6 +89,7 @@ fun HomeScreen(
     val currentSelectedRoute = rememberSaveable { mutableStateOf(ScreenRoute.Expense.TEMPLATE) }
     val smsPermissionState = rememberPermissionState(Manifest.permission.READ_SMS)
     val haptic = LocalHapticFeedback.current
+    val isSyncing by viewModel.isSyncing.collectAsState()
 
     LaunchedEffect(key1 = smsPermissionState.status) {
         if (smsPermissionState.status == PermissionStatus.Granted) {
@@ -84,139 +97,198 @@ fun HomeScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { 
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onAddExpense() 
-                },
-                containerColor = AccentBlue,
-                contentColor = Color.White,
-                shape = CircleShape,
-                modifier = Modifier
-                    .offset(y = 50.dp)
-                    .size(56.dp)
-                    .border(4.dp, MaterialTheme.colorScheme.background, CircleShape),
-                elevation = FloatingActionButtonDefaults.elevation(0.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_plus_custom), 
-                    contentDescription = "Add Expense",
-                    modifier = Modifier.size(24.dp)
-                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = MaterialTheme.colorScheme.background,
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAddExpense() 
+                    },
+                    containerColor = AccentBlue,
+                    contentColor = Color.White,
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .offset(y = 50.dp)
+                        .size(56.dp)
+                        .border(4.dp, MaterialTheme.colorScheme.background, CircleShape),
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_plus_custom), 
+                        contentDescription = "Add Expense",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            },
+            floatingActionButtonPosition = FabPosition.Center,
+            bottomBar = {
+                NavigationBar(
+                    modifier = Modifier
+                        .height(80.dp),
+                    containerColor = MaterialTheme.colorScheme.background,
+                    tonalElevation = 0.dp
+                ) {
+                    NavigationBarItem(
+                        label = { Text("Home") },
+                        icon = { Icon(painterResource(R.drawable.ic_home_custom), null) },
+                        selected = currentSelectedRoute.value == ScreenRoute.Expense.TEMPLATE,
+                        onClick = {
+                            currentSelectedRoute.value = ScreenRoute.Expense.TEMPLATE
+                            navController.replace(currentSelectedRoute.value)
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = AccentBlue,
+                            unselectedIconColor = Color.Gray,
+                            selectedTextColor = AccentBlue,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+                    NavigationBarItem(
+                        label = { Text("Reports") },
+                        icon = { Icon(painterResource(R.drawable.ic_bell_custom), null) },
+                        selected = currentSelectedRoute.value == ScreenRoute.Reports.TEMPLATE,
+                        onClick = {
+                            currentSelectedRoute.value = ScreenRoute.Reports.TEMPLATE
+                            navController.replace(currentSelectedRoute.value)
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = AccentBlue,
+                            unselectedIconColor = Color.Gray,
+                            selectedTextColor = AccentBlue,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+                    
+                    Spacer(Modifier.weight(0.1f))
+
+                    NavigationBarItem(
+                        label = { Text("Budget") },
+                        icon = { Icon(painterResource(R.drawable.ic_money_custom), null) },
+                        selected = currentSelectedRoute.value == ScreenRoute.Budget.TEMPLATE,
+                        onClick = {
+                            currentSelectedRoute.value = ScreenRoute.Budget.TEMPLATE
+                            navController.replace(currentSelectedRoute.value)
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = AccentBlue,
+                            unselectedIconColor = Color.Gray,
+                            selectedTextColor = AccentBlue,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+                    NavigationBarItem(
+                        label = { Text("Profile") },
+                        icon = { Icon(painterResource(R.drawable.ic_usersettings_custom), null) },
+                        selected = currentSelectedRoute.value == ScreenRoute.Profile.TEMPLATE,
+                        onClick = {
+                            currentSelectedRoute.value = ScreenRoute.Profile.TEMPLATE
+                            navController.replace(currentSelectedRoute.value)
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = AccentBlue,
+                            unselectedIconColor = Color.Gray,
+                            selectedTextColor = AccentBlue,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+                }
             }
-        },
-        floatingActionButtonPosition = FabPosition.Center,
-        bottomBar = {
-            NavigationBar(
+        ) { paddingValues ->
+            NavHost(
                 modifier = Modifier
-                    .height(80.dp),
-                containerColor = MaterialTheme.colorScheme.background,
-                tonalElevation = 0.dp
+                    .padding(paddingValues)
+                    .fillMaxSize(),
+                navController = navController,
+                startDestination = ScreenRoute.Expense.TEMPLATE,
+                enterTransition = { fadeIn(tween(300)) + scaleIn(initialScale = 0.95f, animationSpec = tween(300)) },
+                exitTransition = { fadeOut(tween(300)) + scaleOut(targetScale = 1.05f, animationSpec = tween(300)) },
+                popEnterTransition = { fadeIn(tween(300)) + scaleIn(initialScale = 0.95f, animationSpec = tween(300)) },
+                popExitTransition = { fadeOut(tween(300)) + scaleOut(targetScale = 1.05f, animationSpec = tween(300)) }
             ) {
-                NavigationBarItem(
-                    label = { Text("Home") },
-                    icon = { Icon(painterResource(R.drawable.ic_home_custom), null) },
-                    selected = currentSelectedRoute.value == ScreenRoute.Expense.TEMPLATE,
-                    onClick = {
+                composable(ScreenRoute.Expense.TEMPLATE) { 
+                    ExpenseScreen(
+                        onEditExpense = onEditExpense,
+                        onBudgetClick = {
+                            currentSelectedRoute.value = ScreenRoute.Budget.TEMPLATE
+                            navController.replace(currentSelectedRoute.value)
+                        },
+                        onSeeAllClick = onSeeAllExpenses
+                    ) 
+                }
+                composable(ScreenRoute.Reports.TEMPLATE) { ReportsScreen(onAddSuggestion = onAddSuggestion) }
+                composable(ScreenRoute.Budget.TEMPLATE) { 
+                    BudgetScreen(onGoBack = {
                         currentSelectedRoute.value = ScreenRoute.Expense.TEMPLATE
                         navController.replace(currentSelectedRoute.value)
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = AccentBlue,
-                        unselectedIconColor = Color.Gray,
-                        selectedTextColor = AccentBlue,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
-                NavigationBarItem(
-                    label = { Text("Reports") },
-                    icon = { Icon(painterResource(R.drawable.ic_bell_custom), null) },
-                    selected = currentSelectedRoute.value == ScreenRoute.Reports.TEMPLATE,
-                    onClick = {
-                        currentSelectedRoute.value = ScreenRoute.Reports.TEMPLATE
-                        navController.replace(currentSelectedRoute.value)
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = AccentBlue,
-                        unselectedIconColor = Color.Gray,
-                        selectedTextColor = AccentBlue,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
-                
-                Spacer(Modifier.weight(0.1f))
-
-                NavigationBarItem(
-                    label = { Text("Budget") },
-                    icon = { Icon(painterResource(R.drawable.ic_money_custom), null) },
-                    selected = currentSelectedRoute.value == ScreenRoute.Budget.TEMPLATE,
-                    onClick = {
-                        currentSelectedRoute.value = ScreenRoute.Budget.TEMPLATE
-                        navController.replace(currentSelectedRoute.value)
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = AccentBlue,
-                        unselectedIconColor = Color.Gray,
-                        selectedTextColor = AccentBlue,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
-                NavigationBarItem(
-                    label = { Text("Profile") },
-                    icon = { Icon(painterResource(R.drawable.ic_usersettings_custom), null) },
-                    selected = currentSelectedRoute.value == ScreenRoute.Profile.TEMPLATE,
-                    onClick = {
-                        currentSelectedRoute.value = ScreenRoute.Profile.TEMPLATE
-                        navController.replace(currentSelectedRoute.value)
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = AccentBlue,
-                        unselectedIconColor = Color.Gray,
-                        selectedTextColor = AccentBlue,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
+                    }) 
+                }
+                composable(ScreenRoute.Profile.TEMPLATE) { 
+                    ProfileScreen(onLogout = { settingsViewModel.logout() })
+                }
             }
         }
-    ) { paddingValues ->
-        NavHost(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-            navController = navController,
-            startDestination = ScreenRoute.Expense.TEMPLATE,
-            enterTransition = { fadeIn(tween(300)) + scaleIn(initialScale = 0.95f, animationSpec = tween(300)) },
-            exitTransition = { fadeOut(tween(300)) + scaleOut(targetScale = 1.05f, animationSpec = tween(300)) },
-            popEnterTransition = { fadeIn(tween(300)) + scaleIn(initialScale = 0.95f, animationSpec = tween(300)) },
-            popExitTransition = { fadeOut(tween(300)) + scaleOut(targetScale = 1.05f, animationSpec = tween(300)) }
+
+        // Overlay Loading Bar
+        AnimatedVisibility(
+            visible = isSyncing,
+            enter = fadeIn(),
+            exit = fadeOut()
         ) {
-            composable(ScreenRoute.Expense.TEMPLATE) { 
-                ExpenseScreen(
-                    onEditExpense = onEditExpense,
-                    onBudgetClick = {
-                        currentSelectedRoute.value = ScreenRoute.Budget.TEMPLATE
-                        navController.replace(currentSelectedRoute.value)
-                    },
-                    onSeeAllClick = onSeeAllExpenses
-                ) 
-            }
-            composable(ScreenRoute.Reports.TEMPLATE) { ReportsScreen(onAddSuggestion = onAddSuggestion) }
-            composable(ScreenRoute.Budget.TEMPLATE) { 
-                BudgetScreen(onGoBack = {
-                    currentSelectedRoute.value = ScreenRoute.Expense.TEMPLATE
-                    navController.replace(currentSelectedRoute.value)
-                }) 
-            }
-            composable(ScreenRoute.Profile.TEMPLATE) { 
-                ProfileScreen(onLogout = { settingsViewModel.logout() })
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(80.dp),
+                            color = AccentBlue,
+                            strokeWidth = 6.dp,
+                            strokeCap = StrokeCap.Round
+                        )
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_bell_custom),
+                            contentDescription = null,
+                            tint = AccentBlue,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Syncing History",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Analyzing your messages for expenses...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(4.dp)
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
+                        color = AccentBlue,
+                        trackColor = Color.White.copy(alpha = 0.1f),
+                        strokeCap = StrokeCap.Round
+                    )
+                }
             }
         }
     }

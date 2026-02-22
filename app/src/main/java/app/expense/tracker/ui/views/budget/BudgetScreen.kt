@@ -72,6 +72,7 @@ import app.expense.tracker.ui.theme.Secondary
 import app.expense.tracker.ui.utils.AmountInputDialog
 import kotlinx.coroutines.delay
 import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -285,7 +286,7 @@ fun BudgetScreen(
                                     )
                                 }
                                 Text(
-                                    text = NumberFormat.getCurrencyInstance().format(category.spent),
+                                    text = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(category.spent),
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (category.spent > category.limit) AccentRed else Color.White,
@@ -293,7 +294,7 @@ fun BudgetScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = NumberFormat.getCurrencyInstance().format(category.limit),
+                                    text = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(category.limit),
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = AccentBlue, // Highlight clickable limits
@@ -318,7 +319,7 @@ fun BudgetScreen(
                                 fontWeight = FontWeight.Black
                             )
                             Text(
-                                text = NumberFormat.getCurrencyInstance().format(viewState.totalSpent),
+                                text = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(viewState.totalSpent),
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = if (viewState.totalSpent > viewState.totalLimit) AccentRed else Color.White,
@@ -326,7 +327,7 @@ fun BudgetScreen(
                                 fontWeight = FontWeight.Black
                             )
                             Text(
-                                text = NumberFormat.getCurrencyInstance().format(viewState.totalLimit),
+                                text = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(viewState.totalLimit),
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray,

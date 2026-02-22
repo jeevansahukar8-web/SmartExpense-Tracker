@@ -10,6 +10,7 @@ import app.expense.presentation.viewStates.ExpenseListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Locale
 import java.util.Locale.getDefault
 import javax.inject.Inject
 
@@ -39,7 +40,7 @@ class ExpenseListViewModel @Inject constructor(
                 mapEntry.value.map { expense ->
                     ExpenseListState.Item(
                         id = expense.id ?: 0,
-                        amount = NumberFormat.getCurrencyInstance().format(expense.amount),
+                        amount = NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(expense.amount),
                         paidTo = expense.paidTo,
                         category = expense.categories.firstOrNull(),
                         time = SimpleDateFormat("hh:mm a", getDefault()).format(expense.time)
