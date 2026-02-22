@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
-    kotlin("android")
-    kotlin("kapt")
-    id(BuildPlugins.HILT)
+    id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -89,6 +89,9 @@ dependencies {
     implementation(Deps.Hilt.WORKER)
     kapt(Deps.Hilt.KAPT_WORKER)
     implementation(Deps.Hilt.NAVIGATION_COMPOSE)
+
+    // DataStore
+    implementation(Deps.DataStore.ANDROID_PREFS)
 
     // Junit
     testImplementation(Deps.JUnit.TEST)

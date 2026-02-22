@@ -104,6 +104,7 @@ object Deps {
         private const val DATA_STORE_VERSION = "1.0.0"
 
         const val PREFS = "androidx.datastore:datastore-preferences-core:$DATA_STORE_VERSION"
+        const val ANDROID_PREFS = "androidx.datastore:datastore-preferences:$DATA_STORE_VERSION"
         const val CORE = "androidx.datastore:datastore:$DATA_STORE_VERSION"
 
     }

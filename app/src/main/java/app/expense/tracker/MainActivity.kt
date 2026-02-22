@@ -3,16 +3,10 @@ package app.expense.tracker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import app.expense.tracker.services.SMSSyncWorker
-import app.expense.tracker.ui.nav.HomeNavigation
-import app.expense.tracker.ui.theme.AutoExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.Duration
 
@@ -27,14 +21,7 @@ class MainActivity : ComponentActivity() {
 
     private fun attachUI() {
         setContent {
-            AutoExpenseTrackerTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    HomeNavigation()
-                }
-            }
+            ExpenseTrackerMain()
         }
     }
 

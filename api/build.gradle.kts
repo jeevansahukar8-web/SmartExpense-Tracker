@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdk = ConfigData.targetSdkVersion
+    compileSdk = ConfigData.compileSdkVersion
     namespace = "app.expense.api"
 
     defaultConfig {
@@ -17,7 +17,7 @@ android {
     }
 
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -25,43 +25,44 @@ android {
             )
         }
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
 
-    kotlinOptions {
-        jvmTarget = "17"
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
 dependencies {
-    // Retrofit
-    implementation(Deps.Retrofit.RETROFIT)
-    implementation(Deps.Retrofit.GSON)
-
-    // Room
-    implementation(Deps.Room.RUNTIME)
-    implementation(Deps.Room.KTX)
-    kapt(Deps.Room.KAPT_COMPILER)
+    implementation(Deps.Core.DEPENDENCY)
 
     // Hilt
     implementation(Deps.Hilt.HILT)
     kapt(Deps.Hilt.KAPT)
 
-    // DataStore
-    implementation(Deps.DataStore.CORE)
-    implementation(Deps.DataStore.PREFS)
+    // Room
+    implementation(Deps.Room.KTX)
+    implementation(Deps.Room.RUNTIME)
+    kapt(Deps.Room.KAPT_COMPILER)
+
+    // Retrofit
+    implementation(Deps.Retrofit.RETROFIT)
+    implementation(Deps.Retrofit.GSON)
+
+    // Datastore
+    implementation(Deps.DataStore.ANDROID_PREFS)
 
     // Junit
     testImplementation(Deps.JUnit.TEST)
-    androidTestImplementation(Deps.JUnit.ANDROID_TEST)
+
+    // Mockk
+    testImplementation(Deps.Mockk.TEST)
 }
 
 kapt {
     correctErrorTypes = true
-    arguments {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
 }

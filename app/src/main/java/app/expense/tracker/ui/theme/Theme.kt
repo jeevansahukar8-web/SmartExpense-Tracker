@@ -30,11 +30,11 @@ private val DarkColorScheme = darkColorScheme(
     primary = Primary,
     secondary = Secondary,
     tertiary = Tertiary,
-    background = OnBackground,
+    background = Background,
     surface = Secondary,
     onPrimary = OnPrimary,
     onSecondary = OnSecondary,
-    onBackground = OnSecondary,
+    onBackground = OnBackground,
     onSurface = OnSecondary,
     error = ChartRed
 )
@@ -43,7 +43,7 @@ private val LightColorScheme = lightColorScheme(
     primary = Primary,
     secondary = Secondary,
     tertiary = Tertiary,
-    background = Background,
+    background = Background, // Changed to Background (Black) as requested
     surface = Surface,
     onPrimary = OnPrimary,
     onSecondary = OnSecondary,
@@ -62,7 +62,7 @@ val AppShapes = Shapes(
 
 @Composable
 fun AutoExpenseTrackerTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Default to true as user requested black
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -77,6 +77,7 @@ fun AutoExpenseTrackerTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

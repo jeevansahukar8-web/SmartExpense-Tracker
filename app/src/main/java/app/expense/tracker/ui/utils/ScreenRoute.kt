@@ -13,6 +13,22 @@ object ScreenRoute {
     object Suggestions {
         const val TEMPLATE = "suggestions"
     }
+    
+    object Budget {
+        const val TEMPLATE = "budget"
+    }
+    
+    object Reports {
+        const val TEMPLATE = "reports"
+    }
+
+    object Settings {
+        const val TEMPLATE = "settings"
+    }
+
+    object Profile {
+        const val TEMPLATE = "profile"
+    }
 
     object AddExpense {
         const val TEMPLATE = "expense/new"

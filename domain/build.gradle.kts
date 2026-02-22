@@ -42,6 +42,9 @@ dependencies {
     implementation(Deps.Hilt.HILT)
     kapt(Deps.Hilt.KAPT)
 
+    // DataStore
+    implementation(Deps.DataStore.ANDROID_PREFS)
+
     // Coroutines
     implementation(Deps.Coroutines.DEP)
 

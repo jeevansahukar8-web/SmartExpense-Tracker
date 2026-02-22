@@ -1,5 +1,6 @@
 package app.expense.domain.di
 
+import android.content.Context
 import app.expense.api.CategoryAPI
 import app.expense.api.ExpenseAPI
 import app.expense.api.PaidToAPI
@@ -20,15 +21,22 @@ import app.expense.domain.suggestion.mappers.SuggestionDataMapper
 import app.expense.domain.suggestion.usecases.DeleteSuggestionUseCase
 import app.expense.domain.suggestion.usecases.FetchSuggestionUseCase
 import app.expense.domain.suggestion.usecases.SyncSuggestionUseCase
+import app.expense.domain.utils.UserPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.util.*
 
 @InstallIn(SingletonComponent::class)
 @Module
 class DomainModule {
+
+    @Provides
+    fun provideUserPreferences(@ApplicationContext context: Context): UserPreferences {
+        return UserPreferences(context)
+    }
 
     @Provides
     fun provideSuggestionParserHelper(): RegexHelper {
