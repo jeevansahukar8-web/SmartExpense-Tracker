@@ -1,6 +1,8 @@
 package app.expense.tracker.ui.views.expense
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -27,13 +29,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,10 +61,32 @@ fun ExpenseStatsView(
     val expenseStats = viewModel.getExpenseStats().collectAsState(initial = ExpenseStats()).value
     val haptic = LocalHapticFeedback.current
 
+    // Entrance Animation Logic
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { 
+        isVisible = true 
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
+    val headerAlpha by animateFloatAsState(if (isVisible) 1f else 0f, tween(500), label = "headerAlpha")
+    val headerOffset by animateFloatAsState(if (isVisible) 0f else -50f, tween(500, easing = FastOutSlowInEasing), label = "headerOffset")
+
+    val cardAlpha by animateFloatAsState(if (isVisible) 1f else 0f, tween(500, delayMillis = 100), label = "cardAlpha")
+    val cardOffset by animateFloatAsState(if (isVisible) 0f else 50f, tween(500, delayMillis = 100, easing = FastOutSlowInEasing), label = "cardOffset")
+
+    val widgetsAlpha by animateFloatAsState(if (isVisible) 1f else 0f, tween(500, delayMillis = 200), label = "widgetsAlpha")
+    val widgetsOffset by animateFloatAsState(if (isVisible) 0f else 50f, tween(500, delayMillis = 200, easing = FastOutSlowInEasing), label = "widgetsOffset")
+
     Column(modifier = Modifier.padding(16.dp)) {
         // Welcome Header
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = headerAlpha
+                    translationY = headerOffset
+                }
+                .padding(bottom = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -96,7 +125,8 @@ fun ExpenseStatsView(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
+                    .background(MaterialTheme.colorScheme.surface)
+                    .clickable { haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -112,6 +142,10 @@ fun ExpenseStatsView(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = cardAlpha
+                    translationY = cardOffset
+                }
                 .border(
                     width = 1.dp,
                     brush = Brush.linearGradient(
@@ -159,7 +193,14 @@ fun ExpenseStatsView(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Activity Widgets
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = widgetsAlpha
+                    translationY = widgetsOffset
+                }
+        ) {
             Card(
                 modifier = Modifier.weight(1f).height(160.dp),
                 shape = MaterialTheme.shapes.large,
@@ -183,7 +224,10 @@ fun ExpenseStatsView(
                 modifier = Modifier
                     .weight(1f)
                     .height(160.dp)
-                    .clickable { onBudgetClick() },
+                    .clickable { 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onBudgetClick() 
+                    },
                 shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
@@ -194,7 +238,7 @@ fun ExpenseStatsView(
                         MultiSegmentDonutChart(
                             modifier = Modifier.size(70.dp),
                             categorySpent = expenseStats.categorySpent,
-                            totalBudget = 5000.0
+                            totalBudget = expenseStats.totalBudget
                         )
                         Text(
                             text = "${(expenseStats.budgetProgress * 100).toInt()}%",
@@ -221,6 +265,14 @@ fun WeeklyBarChart(
     data: List<Double>
 ) {
     val days = listOf("S", "M", "T", "W", "T", "F", "S")
+    val haptic = LocalHapticFeedback.current
+    
+    LaunchedEffect(data) {
+        if (data.isNotEmpty()) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
     Column(modifier = modifier) {
         Row(
             modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -264,20 +316,22 @@ fun MultiSegmentDonutChart(
     categorySpent: Map<String, Double>,
     totalBudget: Double
 ) {
-    val animationProgress = remember { Animatable(0f) }
+    val sweepProgress = remember { Animatable(0f) }
+    val haptic = LocalHapticFeedback.current
 
     LaunchedEffect(categorySpent) {
-        animationProgress.animateTo(
+        sweepProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 1000)
+            animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
         )
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
     Canvas(modifier = modifier) {
-        val strokeWidth = 8.dp.toPx()
+        val strokeWidth = 10.dp.toPx() 
         
         drawArc(
-            color = Color.Gray.copy(alpha = 0.1f),
+            color = Color.Gray.copy(alpha = 0.15f),
             startAngle = -90f,
             sweepAngle = 360f,
             useCenter = false,
@@ -285,9 +339,14 @@ fun MultiSegmentDonutChart(
         )
 
         var startAngle = -90f
-        categorySpent.entries.forEachIndexed { index, entry ->
-            val sweepAngle = (entry.value / totalBudget).toFloat() * 360f * animationProgress.value
-            val color = AvatarColors[index % AvatarColors.size]
+        categorySpent.entries.forEach { entry ->
+            val targetSweepAngle = if (totalBudget > 0) {
+                (entry.value / totalBudget).toFloat() * 360f
+            } else 0f
+            
+            val sweepAngle = targetSweepAngle * sweepProgress.value
+            
+            val color = AvatarColors[Math.abs(entry.key.hashCode()) % AvatarColors.size]
             
             drawArc(
                 color = color,
@@ -296,7 +355,7 @@ fun MultiSegmentDonutChart(
                 useCenter = false,
                 style = Stroke(width = strokeWidth)
             )
-            startAngle += sweepAngle
+            startAngle += targetSweepAngle
         }
     }
 }

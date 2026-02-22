@@ -34,6 +34,10 @@ object ScreenRoute {
         const val TEMPLATE = "expense/new"
     }
 
+    object AllExpenses {
+        const val TEMPLATE = "all_expenses"
+    }
+
     object SuggestExpense {
         const val TEMPLATE = "suggest_expense/{suggestion_id}"
         const val SUGGESTION_ID_ARG = "suggestion_id"

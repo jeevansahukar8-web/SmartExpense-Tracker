@@ -48,6 +48,11 @@ dependencies {
     // Coroutines
     implementation(Deps.Coroutines.DEP)
 
+    // TFLite
+    implementation(Deps.TFLite.CORE)
+    implementation(Deps.TFLite.SUPPORT)
+    implementation(Deps.TFLite.TASK_TEXT)
+
     // Junit
     testImplementation(Deps.JUnit.TEST)
 
@@ -63,4 +68,10 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
+    arguments {
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+        arg("dagger.hilt.android.internal.projectType", "LIBRARY")
+        arg("dagger.hilt.internal.useAggregatingRootProcessor", "true")
+    }
 }

@@ -9,9 +9,7 @@ import app.expense.presentation.viewStates.ExpenseStats
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import java.text.NumberFormat
-import java.util.Locale.getDefault
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,24 +22,32 @@ class ExpenseStatsViewModel @Inject constructor(
         val calendar = Calendar.getInstance()
         // Start of current month
         calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
         val monthStart = calendar.timeInMillis
         
         // Start of current week (for activity)
         val weekCalendar = Calendar.getInstance()
         weekCalendar.set(Calendar.DAY_OF_WEEK, weekCalendar.firstDayOfWeek)
+        weekCalendar.set(Calendar.HOUR_OF_DAY, 0)
+        weekCalendar.set(Calendar.MINUTE, 0)
+        weekCalendar.set(Calendar.SECOND, 0)
         val weekStart = weekCalendar.timeInMillis
 
         return combine(
-            fetchExpenseUseCase.getExpenses(from = 0L),
+            fetchExpenseUseCase.getExpenses(from = monthStart),
             userPreferences.userDetailsFlow,
-            userPreferences.monthlyBudgetFlow
-        ) { allExpenses, userDetails, monthlyBudget ->
-            val currentMonthExpenses = allExpenses.filter { it.time >= monthStart }
-            val currentWeekExpenses = allExpenses.filter { it.time >= weekStart }
-            
+            userPreferences.monthlyBudgetFlow,
+            userPreferences.categoryBudgetsFlow
+        ) { currentMonthExpenses, userDetails, monthlyBudget, categoryBudgets ->
             val totalSpentAmount = currentMonthExpenses.sumOf { it.amount }
+
+            // Monthly budget is now the fixed total target as set in BudgetViewModel
+            val totalBudgetLimit = monthlyBudget
             
             // Calculate weekly activity (7 days)
+            val currentWeekExpenses = currentMonthExpenses.filter { it.time >= weekStart }
             val weeklyData = DoubleArray(7) { 0.0 }
             currentWeekExpenses.forEach { expense ->
                 val cal = Calendar.getInstance()
@@ -55,7 +61,9 @@ class ExpenseStatsViewModel @Inject constructor(
             val categorySpent = getCategorySpent(currentMonthExpenses)
             val topCategory = categorySpent.maxByOrNull { it.value }?.key ?: "None"
             
-            val progress = (totalSpentAmount / monthlyBudget).toFloat().coerceIn(0f, 1f)
+            val progress = if (totalBudgetLimit > 0) {
+                (totalSpentAmount / totalBudgetLimit).toFloat().coerceIn(0f, 1f)
+            } else 0f
 
             ExpenseStats(
                 userName = userDetails.firstName.ifBlank { "User" },
@@ -63,7 +71,8 @@ class ExpenseStatsViewModel @Inject constructor(
                 weeklySpent = weeklyData.toList(),
                 categorySpent = categorySpent,
                 topCategory = topCategory,
-                budgetProgress = progress
+                budgetProgress = progress,
+                totalBudget = totalBudgetLimit
             )
         }
     }

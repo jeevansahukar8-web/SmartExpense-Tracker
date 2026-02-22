@@ -2,6 +2,11 @@ package app.expense.tracker.ui.views.home
 
 import android.Manifest
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +68,7 @@ fun HomeScreen(
     onAddExpense: () -> Unit,
     onEditExpense: (expenseId: Long) -> Unit,
     onAddSuggestion: (suggestionId: Long) -> Unit,
+    onSeeAllExpenses: () -> Unit,
     viewModel: HomeScreenViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -187,6 +193,10 @@ fun HomeScreen(
                 .fillMaxSize(),
             navController = navController,
             startDestination = ScreenRoute.Expense.TEMPLATE,
+            enterTransition = { fadeIn(tween(300)) + scaleIn(initialScale = 0.95f, animationSpec = tween(300)) },
+            exitTransition = { fadeOut(tween(300)) + scaleOut(targetScale = 1.05f, animationSpec = tween(300)) },
+            popEnterTransition = { fadeIn(tween(300)) + scaleIn(initialScale = 0.95f, animationSpec = tween(300)) },
+            popExitTransition = { fadeOut(tween(300)) + scaleOut(targetScale = 1.05f, animationSpec = tween(300)) }
         ) {
             composable(ScreenRoute.Expense.TEMPLATE) { 
                 ExpenseScreen(
@@ -194,7 +204,8 @@ fun HomeScreen(
                     onBudgetClick = {
                         currentSelectedRoute.value = ScreenRoute.Budget.TEMPLATE
                         navController.replace(currentSelectedRoute.value)
-                    }
+                    },
+                    onSeeAllClick = onSeeAllExpenses
                 ) 
             }
             composable(ScreenRoute.Reports.TEMPLATE) { ReportsScreen(onAddSuggestion = onAddSuggestion) }

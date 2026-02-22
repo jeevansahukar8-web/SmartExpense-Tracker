@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import app.expense.tracker.ui.utils.ScreenRoute
 import app.expense.tracker.ui.views.addExpense.AddExpenseScreen
+import app.expense.tracker.ui.views.expense.AllExpensesScreen
 import app.expense.tracker.ui.views.home.HomeScreen
 
 @Composable
@@ -36,6 +37,21 @@ fun HomeNavigation() {
                     navController.navigate(
                         ScreenRoute.SuggestExpense.getSuggestExpenseRoute(
                             suggestionId
+                        )
+                    )
+                },
+                onSeeAllExpenses = {
+                    navController.navigate(ScreenRoute.AllExpenses.TEMPLATE)
+                }
+            )
+        }
+        composable(ScreenRoute.AllExpenses.TEMPLATE) {
+            AllExpensesScreen(
+                onGoBack = { navController.popBackStack() },
+                onEditExpense = { expenseId ->
+                    navController.navigate(
+                        ScreenRoute.EditExpense.getEditExpenseRoute(
+                            expenseId
                         )
                     )
                 }

@@ -1,6 +1,9 @@
 package app.expense.tracker.ui.views.expense
 
 import android.icu.lang.UCharacter
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,18 +20,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,11 +46,14 @@ import app.expense.presentation.viewStates.ExpenseListState
 import app.expense.tracker.R
 import app.expense.tracker.ui.theme.AccentBlue
 import app.expense.tracker.ui.theme.AvatarColors
+import kotlinx.coroutines.delay
 import java.util.Locale.getDefault
 
 @Composable
 fun ExpenseListView(
     onEditExpense: (expenseId: Long) -> Unit,
+    onSeeAllClick: () -> Unit = {},
+    showHeader: Boolean = true,
     viewModel: ExpenseListViewModel = hiltViewModel()
 ) {
     val expenseListState =
@@ -58,36 +68,45 @@ fun ExpenseListView(
             )
         }
     } else {
-        ShowExpenseList(expenseListState, onEditExpense)
+        ShowExpenseList(expenseListState, onEditExpense, onSeeAllClick, showHeader)
     }
 }
 
 @Composable
 private fun ShowExpenseList(
     expenseListState: ExpenseListState,
-    onEditExpense: (expenseId: Long) -> Unit
+    onEditExpense: (expenseId: Long) -> Unit,
+    onSeeAllClick: () -> Unit,
+    showHeader: Boolean
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Recent Activity",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "See All",
-                style = MaterialTheme.typography.labelLarge,
-                color = AccentBlue,
-                fontWeight = FontWeight.SemiBold
-            )
+        if (showHeader) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recent Activity",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "See All",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AccentBlue,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { onSeeAllClick() }
+                        .padding(4.dp)
+                )
+            }
         }
 
         LazyColumn {
+            var currentBaseIndex = 0
             expenseListState.dateExpenseMap.forEach { (dateString, expenseItems) ->
                 item {
                     Text(
@@ -100,11 +119,13 @@ private fun ShowExpenseList(
                     )
                 }
 
+                val baseIndex = currentBaseIndex
                 items(expenseItems.size) { index ->
                     val expenseItem = expenseItems[index]
-                    TransactionItem(expenseItem, onEditExpense)
+                    TransactionItem(expenseItem, baseIndex + index, onEditExpense)
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+                currentBaseIndex += expenseItems.size
             }
         }
     }
@@ -113,13 +134,36 @@ private fun ShowExpenseList(
 @Composable
 private fun TransactionItem(
     expenseItem: ExpenseListState.Item,
+    index: Int,
     onEditExpense: (expenseId: Long) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     
+    // Animation States
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(index * 50L) // Staggered delay
+        isVisible = true
+    }
+    
+    val alpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "alpha"
+    )
+    val translationY by animateFloatAsState(
+        targetValue = if (isVisible) 0f else 20f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "translationY"
+    )
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                this.alpha = alpha
+                this.translationY = translationY
+            }
             .clickable {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onEditExpense(expenseItem.id)
@@ -134,7 +178,7 @@ private fun TransactionItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ModernAvatar(expenseItem)
+            ModernAvatar(expenseItem.paidTo)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -144,7 +188,7 @@ private fun TransactionItem(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${expenseItem.category} • ${expenseItem.time}",
+                    text = "${expenseItem.category} \u2022 ${expenseItem.time}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
@@ -178,23 +222,25 @@ private fun getFormattedPaidTo(expenseItem: ExpenseListState.Item) =
     )
 
 @Composable
-private fun ModernAvatar(expenseItem: ExpenseListState.Item) {
-    val name = expenseItem.paidTo ?: "Others"
-    val colorIndex = name.length % AvatarColors.size
+fun ModernAvatar(name: String?, modifier: Modifier = Modifier) {
+    val safeName = name?.takeIf { it.isNotBlank() } ?: "Others"
+    val firstLetter = safeName.first().uppercase()
+    
+    val colorIndex = Math.abs(safeName.hashCode()) % AvatarColors.size
     val avatarColor = AvatarColors[colorIndex]
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(44.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(avatarColor.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_home_custom), // Placeholder
-            contentDescription = null,
-            tint = avatarColor,
-            modifier = Modifier.size(24.dp)
+        Text(
+            text = firstLetter,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = avatarColor
         )
     }
 }

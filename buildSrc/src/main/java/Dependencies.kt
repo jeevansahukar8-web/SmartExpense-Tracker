@@ -113,6 +113,14 @@ object Deps {
         const val DEPS = "com.google.accompanist:accompanist-permissions:0.32.0"
     }
 
+    object TFLite {
+        private const val VERSION = "2.14.0"
+        const val CORE = "org.tensorflow:tensorflow-lite:$VERSION"
+        const val SUPPORT = "org.tensorflow:tensorflow-lite-support:0.4.4"
+        const val METADATA = "org.tensorflow:tensorflow-lite-metadata:0.4.4"
+        const val TASK_TEXT = "org.tensorflow:tensorflow-lite-task-text:0.4.4"
+    }
+
     object Modules {
         const val PRESENTATION = ":presentation"
         const val DOMAIN = ":domain"

@@ -1,6 +1,8 @@
 package app.expense.tracker.ui.views.budget
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -34,6 +37,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +51,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,6 +70,7 @@ import app.expense.tracker.ui.theme.AccentRed
 import app.expense.tracker.ui.theme.AvatarColors
 import app.expense.tracker.ui.theme.Secondary
 import app.expense.tracker.ui.utils.AmountInputDialog
+import kotlinx.coroutines.delay
 import java.text.NumberFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,11 +82,24 @@ fun BudgetScreen(
     val viewState by viewModel.getBudgetViewState().collectAsState(initial = BudgetViewState())
     var showEditBudgetDialog by remember { mutableStateOf(false) }
     var editingCategory by remember { mutableStateOf<CategoryBudget?>(null) }
+    var pendingCategoryLimitUpdate by remember { mutableStateOf<Pair<String, Double>?>(null) }
+    val haptic = LocalHapticFeedback.current
+
+    // Entrance Animation Logic
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { 
+        isVisible = true 
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress) // Subtle feedback when screen loads
+    }
+
+    val chartAlpha by animateFloatAsState(if (isVisible) 1f else 0f, tween(500), label = "chartAlpha")
+    val chartOffset by animateFloatAsState(if (isVisible) 0f else 20f, tween(500, easing = FastOutSlowInEasing), label = "chartOffset")
 
     if (showEditBudgetDialog) {
         AmountInputDialog(
             amount = viewState.totalLimit,
             onAmountEntered = { newBudget ->
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 viewModel.updateMonthlyBudget(newBudget)
                 showEditBudgetDialog = false
             },
@@ -89,10 +111,39 @@ fun BudgetScreen(
         AmountInputDialog(
             amount = editingCategory!!.limit,
             onAmountEntered = { newLimit ->
-                viewModel.updateCategoryBudget(editingCategory!!.name, newLimit)
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                pendingCategoryLimitUpdate = editingCategory!!.name to newLimit
                 editingCategory = null
             },
             onDismiss = { editingCategory = null }
+        )
+    }
+
+    if (pendingCategoryLimitUpdate != null) {
+        AlertDialog(
+            onDismissRequest = { pendingCategoryLimitUpdate = null },
+            title = { Text(stringResource(R.string.update_total_budget_title)) },
+            text = { Text(stringResource(R.string.update_total_budget_desc)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    val (category, limit) = pendingCategoryLimitUpdate!!
+                    viewModel.updateCategoryBudgetWithChoice(category, limit, updateOverall = true)
+                    pendingCategoryLimitUpdate = null
+                }) {
+                    Text(stringResource(R.string.adjust_total))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    val (category, limit) = pendingCategoryLimitUpdate!!
+                    viewModel.updateCategoryBudgetWithChoice(category, limit, updateOverall = false)
+                    pendingCategoryLimitUpdate = null
+                }) {
+                    Text(stringResource(R.string.keep_total_fixed))
+                }
+            }
         )
     }
 
@@ -102,12 +153,18 @@ fun BudgetScreen(
             CenterAlignedTopAppBar(
                 title = { Text("Detailed Budget", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onGoBack) {
+                    IconButton(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onGoBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showEditBudgetDialog = true }) {
+                    IconButton(onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showEditBudgetDialog = true 
+                    }) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit Budget", tint = AccentBlue)
                     }
                 },
@@ -128,7 +185,11 @@ fun BudgetScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp),
+                        .height(220.dp)
+                        .graphicsLayer {
+                            alpha = chartAlpha
+                            translationY = chartOffset
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     BudgetDonutChart(
@@ -201,7 +262,10 @@ fun BudgetScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { editingCategory = category }
+                                    .clickable { 
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        editingCategory = category 
+                                    }
                                     .padding(vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -288,7 +352,11 @@ fun BudgetScreen(
                     spent = categoryBudget.spent,
                     limit = categoryBudget.limit,
                     color = AvatarColors[Math.abs(categoryBudget.colorIndex) % AvatarColors.size],
-                    onEdit = { editingCategory = categoryBudget }
+                    index = index,
+                    onEdit = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        editingCategory = categoryBudget 
+                    }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -303,8 +371,11 @@ fun BudgetDonutChart(
     totalLimit: Double
 ) {
     val animationProgress = remember { Animatable(0f) }
+    val haptic = LocalHapticFeedback.current
+
     LaunchedEffect(categories) {
-        animationProgress.animateTo(1f, animationSpec = tween(1000))
+        animationProgress.animateTo(1f, animationSpec = tween(800, easing = FastOutSlowInEasing))
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress) // Subtle feedback when chart animation finishes
     }
 
     Canvas(modifier = modifier) {
@@ -334,12 +405,33 @@ fun BudgetDonutChart(
 }
 
 @Composable
-fun BudgetCategoryItem(name: String, spent: Double, limit: Double, color: Color, onEdit: () -> Unit) {
+fun BudgetCategoryItem(name: String, spent: Double, limit: Double, color: Color, index: Int, onEdit: () -> Unit) {
     val isOverLimit = spent > limit
     val progressValue = if (limit > 0) (spent / limit).toFloat().coerceIn(0f, 1f) else 0f
+    val haptic = LocalHapticFeedback.current
+
+    // Entrance Animation Logic
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { 
+        delay(index * 50L)
+        isVisible = true 
+        if (index == 0) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
+    val alpha by animateFloatAsState(if (isVisible) 1f else 0f, tween(300), label = "alpha")
+    val translationY by animateFloatAsState(if (isVisible) 0f else 20f, tween(300, easing = FastOutSlowInEasing), label = "translationY")
     
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onEdit() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                this.alpha = alpha
+                this.translationY = translationY
+            }
+            .clickable { 
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onEdit() 
+            },
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = Secondary.copy(alpha = 0.5f))
     ) {

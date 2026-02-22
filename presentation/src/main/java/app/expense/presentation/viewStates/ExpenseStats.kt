@@ -6,5 +6,6 @@ data class ExpenseStats(
     val weeklySpent: List<Double> = emptyList(),
     val categorySpent: Map<String, Double> = emptyMap(),
     val topCategory: String = "None",
-    val budgetProgress: Float = 0f
+    val budgetProgress: Float = 0f,
+    val totalBudget: Double = 5000.0
 )

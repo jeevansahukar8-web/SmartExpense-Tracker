@@ -32,4 +32,8 @@
     <string name="save">Save</string>
     <string name="paid_to">Paid To</string>
     <string name="select_date">Select Date</string>
+    <string name="update_total_budget_title">Update Total Budget?</string>
+    <string name="update_total_budget_desc">Would you like to adjust the total monthly budget to reflect this change, or keep the total fixed by adjusting other categories?</string>
+    <string name="adjust_total">Adjust Total</string>
+    <string name="keep_total_fixed">Keep Total Fixed</string>
 </resources>

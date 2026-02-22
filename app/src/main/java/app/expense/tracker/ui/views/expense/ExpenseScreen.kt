@@ -6,10 +6,14 @@ import androidx.compose.runtime.Composable
 @Composable
 fun ExpenseScreen(
     onEditExpense: (expenseId: Long) -> Unit,
-    onBudgetClick: () -> Unit
+    onBudgetClick: () -> Unit,
+    onSeeAllClick: () -> Unit = {}
 ) {
     Column {
         ExpenseStatsView(onBudgetClick = onBudgetClick)
-        ExpenseListView(onEditExpense = onEditExpense)
+        ExpenseListView(
+            onEditExpense = onEditExpense,
+            onSeeAllClick = onSeeAllClick
+        )
     }
 }

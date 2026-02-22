@@ -48,12 +48,13 @@ class BudgetViewModel @Inject constructor(
             val categoryBudgetList = allCategoryNames.map { category ->
                 val spent = expenses.filter { (it.categories.firstOrNull() ?: "Others") == category }.sumOf { it.amount }
                 
+                // Use monthlyBudget as the baseline for defaults
                 val limit = categoryBudgets[category] ?: when (category) {
                     "Food & Dining" -> monthlyBudget * 0.2
                     "Entertainment" -> monthlyBudget * 0.1
                     "Transport" -> monthlyBudget * 0.1
                     "Shopping" -> monthlyBudget * 0.3
-                    else -> monthlyBudget * 0.3
+                    else -> 0.0 // Don't add default limit for unknown categories to avoid inflating the total
                 }
                 
                 CategoryBudget(
@@ -64,15 +65,12 @@ class BudgetViewModel @Inject constructor(
                 )
             }
 
-            // Total limit is the sum of all category limits
-            val calculatedTotalLimit = categoryBudgetList.sumOf { it.limit }
-
             BudgetViewState(
-                totalLimit = calculatedTotalLimit,
+                totalLimit = monthlyBudget, // Total target is now fixed to the user's set monthly budget
                 totalSpent = totalSpent,
                 smsCountToday = suggestions.size,
                 categories = categoryBudgetList,
-                recommendation = generateRecommendation(totalSpent, calculatedTotalLimit, categoryBudgetList)
+                recommendation = generateRecommendation(totalSpent, monthlyBudget, categoryBudgetList)
             )
         }
     }
@@ -82,25 +80,32 @@ class BudgetViewModel @Inject constructor(
      */
     fun updateMonthlyBudget(newTotalBudget: Double) {
         viewModelScope.launch {
-            val viewState = getBudgetViewState().first()
-            val currentTotal = viewState.totalLimit
+            val currentMonthlyBase = userPreferences.monthlyBudgetFlow.first()
             
-            if (currentTotal <= 0) {
+            if (currentMonthlyBase <= 0) {
                 userPreferences.updateMonthlyBudget(newTotalBudget)
                 return@launch
             }
 
-            val ratio = newTotalBudget / currentTotal
-            val currentMonthlyBase = userPreferences.monthlyBudgetFlow.first()
+            val ratio = newTotalBudget / currentMonthlyBase
             
-            // 1. Scale the base monthly budget (affects categories using default logic)
-            userPreferences.updateMonthlyBudget(currentMonthlyBase * ratio)
+            // 1. Update the base monthly budget
+            userPreferences.updateMonthlyBudget(newTotalBudget)
             
             // 2. Scale all manually set category budgets
             val manualBudgets = userPreferences.categoryBudgetsFlow.first()
             manualBudgets.forEach { (name, limit) ->
                 userPreferences.updateCategoryBudget(name, limit * ratio)
             }
+        }
+    }
+
+    /**
+     * Updates a category budget directly.
+     */
+    fun updateCategoryBudget(category: String, limit: Double) {
+        viewModelScope.launch {
+            userPreferences.updateCategoryBudget(category, limit)
         }
     }
 
@@ -122,11 +127,13 @@ class BudgetViewModel @Inject constructor(
                 "Entertainment" -> currentMonthlyBase * 0.1
                 "Transport" -> currentMonthlyBase * 0.1
                 "Shopping" -> currentMonthlyBase * 0.3
-                else -> currentMonthlyBase * 0.3
+                else -> 0.0
             }
 
             if (updateOverall) {
-                // Total target naturally changes by the difference because Total = Sum(Categories)
+                // Adjust the total budget by the difference
+                val diff = newLimit - oldLimit
+                userPreferences.updateMonthlyBudget(currentMonthlyBase + diff)
                 userPreferences.updateCategoryBudget(category, newLimit)
             } else {
                 // Adjust others to keep Total constant
@@ -153,19 +160,32 @@ class BudgetViewModel @Inject constructor(
         val remaining = totalLimit - totalSpent
         val formatter = NumberFormat.getCurrencyInstance()
         
-        if (remaining < 0) {
-            return "Budget Alert: You've exceeded your total limit by ${formatter.format(-remaining)}. We recommend adjusting your targets or cutting non-essential costs immediately."
-        }
+        val overBudgetCategories = categories.filter { it.spent > it.limit }
         
-        val overBudgetCategory = categories.find { it.spent > it.limit }
-        if (overBudgetCategory != null) {
-            return "Note: '${overBudgetCategory.name}' is over its target. To stay within your ${formatter.format(totalLimit)} total, try saving in other areas this week."
+        val baseMessage = when {
+            remaining < 0 -> {
+                "Budget Alert: You've exceeded your total limit by ${formatter.format(-remaining)}. "
+            }
+            totalSpent < totalLimit * 0.4 -> {
+                "On Track! You've only used ${(totalSpent/totalLimit*100).toInt()}% of your budget. "
+            }
+            else -> {
+                "Smart Tip: You have ${formatter.format(remaining)} left. "
+            }
         }
-        
-        if (totalSpent < totalLimit * 0.4) {
-            return "On Track! You've only used ${(totalSpent/totalLimit*100).toInt()}% of your budget. You're set to save significantly for next month!"
+
+        return if (overBudgetCategories.isNotEmpty()) {
+            val names = overBudgetCategories.joinToString(", ") { "'${it.name}'" }
+            val verb = if (overBudgetCategories.size > 1) "are" else "is"
+            "${baseMessage}Note: $names $verb over target. Try saving in other areas this week to balance it out."
+        } else {
+            if (remaining >= 0 && totalSpent >= totalLimit * 0.4) {
+                "${baseMessage}Keeping your daily spend below ${formatter.format(remaining/15)} will help you meet your savings target."
+            } else if (remaining >= 0 && totalSpent < totalLimit * 0.4) {
+                "${baseMessage}You're set to save significantly for next month!"
+            } else {
+                baseMessage + "We recommend adjusting your targets or cutting non-essential costs immediately."
+            }
         }
-        
-        return "Smart Tip: You have ${formatter.format(remaining)} left. Keeping your daily spend below ${formatter.format(remaining/15)} will help you meet your savings target."
     }
 }
