@@ -50,6 +50,7 @@ object Deps {
         const val FOUNDATION = "androidx.compose.foundation:foundation:$COMPOSE_VERSION"
         const val VIEW_MODEL = "androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0"
         const val GOOGLE_FONTS = "androidx.compose.ui:ui-text-google-fonts:$COMPOSE_VERSION"
+        const val ICONS_EXTENDED = "androidx.compose.material:material-icons-extended:$COMPOSE_VERSION"
         const val DEBUG_TOOLING = "androidx.compose.ui:ui-tooling:$COMPOSE_VERSION"
         const val DEBUG_MANIFEST = "androidx.compose.ui:ui-test-manifest:$COMPOSE_VERSION"
         const val ANDROID_UI_TEST = "androidx.compose.ui:ui-test-junit4:$COMPOSE_VERSION"

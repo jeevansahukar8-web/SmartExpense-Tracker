@@ -66,6 +66,7 @@ dependencies {
     implementation(Deps.Compose.CONSTRAINT)
     implementation(Deps.Compose.VIEW_MODEL)
     implementation(Deps.Compose.GOOGLE_FONTS)
+    implementation(Deps.Compose.ICONS_EXTENDED)
     implementation(Deps.Material.DEPENDENCY)
     debugImplementation(Deps.Compose.DEBUG_TOOLING)
     debugImplementation(Deps.Compose.DEBUG_MANIFEST)

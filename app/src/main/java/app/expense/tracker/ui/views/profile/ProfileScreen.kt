@@ -1,7 +1,6 @@
 package app.expense.tracker.ui.views.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,9 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,11 +46,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import app.expense.domain.utils.UserDetails
 import app.expense.presentation.viewModels.SettingsViewModel
 import app.expense.tracker.ui.theme.AccentBlue
 import app.expense.tracker.ui.theme.AccentRed
@@ -60,12 +63,73 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val userDetails by viewModel.userDetailsFlow.collectAsState(initial = UserDetails("", "", "", ""))
+    val userDetails by viewModel.userDetails.collectAsState()
+    val haptic = LocalHapticFeedback.current
     
     var firstName by remember(userDetails) { mutableStateOf(userDetails.firstName) }
     var lastName by remember(userDetails) { mutableStateOf(userDetails.lastName) }
     var email by remember(userDetails) { mutableStateOf(userDetails.email) }
     var phone by remember(userDetails) { mutableStateOf(userDetails.phone) }
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout?", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to log out of your account?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    }
+                ) {
+                    Text("Logout", color = AccentRed, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Account?", fontWeight = FontWeight.Bold) },
+            text = { 
+                Text("This action will permanently remove your account from this device. You will need to register again to use the app.") 
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        viewModel.deleteAccount {
+                            showDeleteDialog = false
+                            onLogout()
+                        }
+                    }
+                ) {
+                    Text("Delete", color = AccentRed, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -92,8 +156,12 @@ fun ProfileScreen(
                     .background(AccentBlue.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
+                val initials = if (firstName.isNotEmpty() || lastName.isNotEmpty()) {
+                    (firstName.take(1) + lastName.take(1)).uppercase()
+                } else "U"
+                
                 Text(
-                    text = (firstName.take(1) + lastName.take(1)).uppercase(),
+                    text = initials,
                     style = MaterialTheme.typography.headlineLarge,
                     color = AccentBlue,
                     fontWeight = FontWeight.Bold
@@ -103,12 +171,12 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "$firstName $lastName",
+                text = if (firstName.isNotEmpty()) "$firstName $lastName" else "User",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = email,
+                text = email.ifBlank { "No email provided" },
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
@@ -152,14 +220,70 @@ fun ProfileScreen(
                 Text("Update Profile", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             
+            // Logout Button
             TextButton(
-                onClick = onLogout,
+                onClick = { showLogoutDialog = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Logout", color = AccentRed, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        tint = AccentRed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout", color = AccentRed, fontWeight = FontWeight.Bold)
+                }
             }
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Danger Zone Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(containerColor = AccentRed.copy(alpha = 0.05f))
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "DANGER ZONE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AccentRed,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Text(
+                        text = "Deleting your account will remove all your data permanently. This action cannot be undone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    TextButton(
+                        onClick = { 
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            showDeleteDialog = true 
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.textButtonColors(contentColor = AccentRed)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Delete Account", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

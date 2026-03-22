@@ -1,17 +1,13 @@
 package app.expense.domain.utils
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
 data class UserDetails(
     val firstName: String,
@@ -20,7 +16,7 @@ data class UserDetails(
     val phone: String
 )
 
-class UserPreferences(private val context: Context) {
+class UserPreferences(private val dataStore: DataStore<Preferences>) {
     companion object {
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         val USER_FIRST_NAME = stringPreferencesKey("first_name")
@@ -31,11 +27,11 @@ class UserPreferences(private val context: Context) {
         val CATEGORY_BUDGETS = stringPreferencesKey("category_budgets") // Format: "Cat1:Limit1,Cat2:Limit2"
     }
 
-    val isLoggedInFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+    val isLoggedInFlow: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[IS_LOGGED_IN] ?: false
     }
 
-    val userDetailsFlow: Flow<UserDetails> = context.dataStore.data.map { preferences ->
+    val userDetailsFlow: Flow<UserDetails> = dataStore.data.map { preferences ->
         UserDetails(
             firstName = preferences[USER_FIRST_NAME] ?: "",
             lastName = preferences[USER_LAST_NAME] ?: "",
@@ -44,11 +40,11 @@ class UserPreferences(private val context: Context) {
         )
     }
 
-    val monthlyBudgetFlow: Flow<Double> = context.dataStore.data.map { preferences ->
+    val monthlyBudgetFlow: Flow<Double> = dataStore.data.map { preferences ->
         preferences[MONTHLY_BUDGET] ?: 5000.0
     }
 
-    val categoryBudgetsFlow: Flow<Map<String, Double>> = context.dataStore.data.map { preferences ->
+    val categoryBudgetsFlow: Flow<Map<String, Double>> = dataStore.data.map { preferences ->
         val serialized = preferences[CATEGORY_BUDGETS] ?: ""
         if (serialized.isBlank()) emptyMap()
         else {
@@ -60,7 +56,7 @@ class UserPreferences(private val context: Context) {
     }
 
     suspend fun saveUser(firstName: String, lastName: String, email: String, phone: String) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[IS_LOGGED_IN] = true
             preferences[USER_FIRST_NAME] = firstName
             preferences[USER_LAST_NAME] = lastName
@@ -70,13 +66,13 @@ class UserPreferences(private val context: Context) {
     }
 
     suspend fun updateMonthlyBudget(budget: Double) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[MONTHLY_BUDGET] = budget
         }
     }
 
     suspend fun updateCategoryBudget(category: String, limit: Double) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val serialized = preferences[CATEGORY_BUDGETS] ?: ""
             val map = if (serialized.isBlank()) mutableMapOf()
             else {
@@ -91,7 +87,7 @@ class UserPreferences(private val context: Context) {
     }
 
     suspend fun logout() {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences.clear()
         }
     }

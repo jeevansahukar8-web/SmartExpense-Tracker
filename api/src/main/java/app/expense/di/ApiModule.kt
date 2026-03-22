@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStoreFile
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import app.expense.api.AuthAPI
 import app.expense.api.CategoryAPI
 import app.expense.api.ExpenseAPI
 import app.expense.api.PaidToAPI
@@ -18,6 +19,7 @@ import app.expense.db.daos.CategoryDAO
 import app.expense.db.daos.ExpenseDAO
 import app.expense.db.daos.PaidToDAO
 import app.expense.db.daos.SuggestionDAO
+import app.expense.db.daos.UserDAO
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -70,6 +72,12 @@ class ApiModule {
 
     @Singleton
     @Provides
+    fun provideUserDao(appDatabase: AppDatabase): UserDAO {
+        return appDatabase.userDAO()
+    }
+
+    @Singleton
+    @Provides
     fun provideSuggestionSyncApi(dataStore: DataStore<Preferences>): SuggestionSyncAPI {
         return SuggestionSyncAPI(dataStore)
     }
@@ -102,6 +110,12 @@ class ApiModule {
     @Provides
     fun providePaidToApi(paidToDAO: PaidToDAO): PaidToAPI {
         return PaidToAPI(paidToDAO)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAuthApi(userDAO: UserDAO, dataStore: DataStore<Preferences>): AuthAPI {
+        return AuthAPI(userDAO, dataStore)
     }
 
     @Singleton

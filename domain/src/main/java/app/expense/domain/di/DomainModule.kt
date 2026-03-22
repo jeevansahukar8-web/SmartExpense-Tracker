@@ -1,12 +1,16 @@
 package app.expense.domain.di
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import app.expense.api.AuthAPI
 import app.expense.api.CategoryAPI
 import app.expense.api.ExpenseAPI
 import app.expense.api.PaidToAPI
 import app.expense.api.SMSReadAPI
 import app.expense.api.SuggestionSyncAPI
 import app.expense.api.SuggestionsAPI
+import app.expense.domain.auth.LoginUseCase
+import app.expense.domain.auth.RegisterUseCase
 import app.expense.domain.categories.FetchCategoriesUseCase
 import app.expense.domain.expense.mappers.ExpenseDataMapper
 import app.expense.domain.expense.usecases.AddExpenseUseCase
@@ -25,7 +29,6 @@ import app.expense.domain.utils.UserPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.util.*
 
@@ -34,8 +37,8 @@ import java.util.*
 class DomainModule {
 
     @Provides
-    fun provideUserPreferences(@ApplicationContext context: Context): UserPreferences {
-        return UserPreferences(context)
+    fun provideUserPreferences(dataStore: DataStore<Preferences>): UserPreferences {
+        return UserPreferences(dataStore)
     }
 
     @Provides
@@ -119,4 +122,10 @@ class DomainModule {
     @Provides
     fun getDeleteSuggestionUseCase(suggestionsAPI: SuggestionsAPI) =
         DeleteSuggestionUseCase(suggestionsAPI)
+
+    @Provides
+    fun provideLoginUseCase(authAPI: AuthAPI) = LoginUseCase(authAPI)
+
+    @Provides
+    fun provideRegisterUseCase(authAPI: AuthAPI) = RegisterUseCase(authAPI)
 }
